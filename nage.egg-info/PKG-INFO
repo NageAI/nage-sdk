@@ -1,0 +1,110 @@
+Metadata-Version: 2.4
+Name: nage
+Version: 0.1.0
+Summary: Nage KLM — Knowledge Lifecycle Model API client
+Author-email: Nage AI <dev@nage.ai>
+License: MIT
+Keywords: llm,ai,knowledge,varve,sedim,nage
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# nage
+
+Python SDK for [Nage KLM](https://nage.ai) — Knowledge Lifecycle Model API.
+
+```bash
+pip install nage
+```
+
+## Quick Start
+
+```python
+import nage
+
+client = nage.Client("nk_live_...")
+
+# Temel kullanım
+response = client.think("Python'da async/await nedir?")
+print(response.response)
+print(response.stemma)
+# STEMMA(MING/coding: 0.62, FEHM/turkish-context: 0.38)
+
+# STEMMA attribution
+for varve, weight in response.stemma.top(3):
+    print(f"  {varve}: {weight:.2%}")
+
+# Platform seç
+response = client.think(
+    "Merge sort nasıl çalışır?",
+    platform="nm/ming",   # MING ağırlıklı
+    max_tokens=1024,
+)
+
+# Streaming
+for chunk in client.think_stream("Merhaba!"):
+    print(chunk, end="", flush=True)
+
+# VARVE listesi
+knowledge = client.knowledge
+print(f"Platform: {knowledge.platform}")
+print(f"Toplam VARVE: {knowledge.total_varves}")
+for layer, varves in knowledge.layers.items():
+    print(f"  {layer}: {[v.varve_id for v in varves]}")
+
+# 4 katman tanımları
+layers = client.layers()
+print(layers["CORTEX"]["question"])  # "Nasıl düşünülür ve sentezlenir?"
+
+# Sağlık kontrolü
+health = client.health()
+print(health["status"])  # "ok"
+```
+
+## Async
+
+```python
+import asyncio
+import nage
+
+async def main():
+    async with nage.AsyncClient("nk_live_...") as client:
+        response = await client.think("Merhaba!")
+        print(response.stemma)
+
+        async for chunk in client.think_stream("Streaming test"):
+            print(chunk, end="", flush=True)
+
+asyncio.run(main())
+```
+
+## STEMMA
+
+Her yanıt STEMMA (kaynak atıf vektörü) içerir:
+
+```python
+response.stemma.weights        # {"MING/coding": 0.62, "FEHM/turkish-context": 0.38}
+response.stemma.dominant_layer # "MING"
+response.stemma.dominant_varve # "MING/coding"
+response.stemma.entropy        # 0.67
+response.stemma.top(2)         # [("MING/coding", 0.62), ("FEHM/turkish-context", 0.38)]
+```
+
+## Platform Aliases
+
+| Alias | Model | Ağırlık |
+|-------|-------|---------|
+| `nage-8b` | Genel | Dengeli |
+| `nage-14b` | Derin düşünme | CORTEX |
+| `nm/fehm` | Türkçe odaklı | FEHM |
+| `nm/ming` | Kod odaklı | MING |
+
+## Katmanlar
+
+- **FEHM** — İletişim, kültür, diyalog
+- **MING** — Teknik, kod, sistemler
+- **CHI** — Alan bilgisi, olgusal
+- **CORTEX** — Akıl yürütme, derin sentez
+
+## License
+
+MIT

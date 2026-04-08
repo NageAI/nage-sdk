@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+nage/__init__.py
+nage_ai.egg-info/PKG-INFO
+nage_ai.egg-info/SOURCES.txt
+nage_ai.egg-info/dependency_links.txt
+nage_ai.egg-info/top_level.txt
