@@ -12,6 +12,9 @@ requires-python = ">=3.9"
 authors = [{name = "Omer Asim", email = "one@nage.ai"}]
 keywords = ["llm", "ai", "knowledge", "varve", "sedim", "nage", "stemma"]
 
+[project.scripts]
+nage = "nage.cli.main:main"
+
 [project.optional-dependencies]
 async = ["aiohttp>=3.9.0"]
 
