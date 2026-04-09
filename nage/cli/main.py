@@ -22,7 +22,7 @@ import json
 import sys
 import os
 
-API_URL = os.environ.get("NAGE_API_URL", "https://api.models.nage.ai")
+API_URL = os.environ.get("NAGE_API_URL", "https://ai.nage.ai")
 PLATFORM_URL = os.environ.get("NAGE_PLATFORM_URL", "https://platform.nage.ai")
 CONFIG_PATH = os.path.expanduser("~/.nage/config.json")
 

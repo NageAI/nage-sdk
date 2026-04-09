@@ -9,7 +9,7 @@ from nage.models import (
     KnowledgeState, VARVEHealth, PlatformInfo,
 )
 
-DEFAULT_BASE_URL = "https://api.models.nage.ai"
+DEFAULT_BASE_URL = "https://ai.nage.ai"
 DEFAULT_TIMEOUT = 120.0
 
 
