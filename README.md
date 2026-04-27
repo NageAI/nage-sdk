@@ -1,26 +1,83 @@
 # nage
 
-Python SDK for [Nage AI](https://nage.ai) — source-attributed intelligence via SEDIM architecture.
+Python SDK for [Nage AI](https://nage.ai) — source-attributed intelligence via SEDIM + STRATUM.
 
 ```bash
 pip install nage
 ```
 
-## Quick Start
+## Quick Start (OpenAI-compatible)
 
 ```python
 import nage
 
-client = nage.Client("nk_live_...")
+client = nage.Client("nk_live_...", base_url="https://api.sedim.ai")
 
-# Think with source attribution
-thought = client.think("What is SEDIM?")
+# Drop-in OpenAI-shape — STRATUM v1.1 §4.3
+r = client.chat_completion(
+    messages=[{"role": "user", "content": "What is SEDIM?"}],
+    model="fehm-8b",
+    inference_mode="resonance_gated",   # SEDIM §5.3 — ~30% latency win
+)
+
+print(r.text)                           # assistant's reply
+print(r.gamma.epistemic_label)          # STABLE / EVOLVING / CONTESTED ...
+print(r.gamma.confidence)               # 0.0–1.0
+print(r.audit_id)                       # for /v1/audit/{id} retrieval
+```
+
+## KLM γ vector (Knowledge Layer Model)
+
+Every response carries a γ vector — the epistemic fingerprint of the answer.
+Visibility is tier-stratified per STRATUM v1.1 §3:
+
+| Tier    | γ Detail   | Field set returned |
+|---------|------------|--------------------|
+| SURFACE | hidden     | (no γ in response) |
+| DRIFT   | label      | `epistemic_label`, `warning` |
+| VEIN    | confidence | + `confidence`, `dominant_source` |
+| LODE    | full       | + `evidence_score`, `coherence_score`, `freshness_score`, `provenance_map` |
+| CORE    | complete   | + `audit_ref` (audit_id, frame_id, signed_by) |
+
+```python
+g = r.gamma
+if g and g.is_contested():
+    print(f"⚠ {g.warning}")
+    print(f"  sources in conflict: {g.provenance_map}")
+```
+
+## Audit retrieval (LODE+ tier)
+
+```python
+# Pull the original audit Knowledge Unit for any past response
+audit = client.audit_get(r.audit_id)
+print(audit.gamma.epistemic_label, audit.gamma.confidence)
+
+# AI Act export — tar.gz of records + signatures + manifest
+export = client.audit_export(period_start="2026-04-01", period_end="2026-04-30")
+export.save("audit-2026-04.tar.gz")
+print(f"exported {export.record_count} records")
+```
+
+## Legacy `client.think()` still works
+
+```python
+# /think endpoint — unchanged from v0.1
+thought = client.think("Türk kahvesi nasıl yapılır?")
 print(thought.response)
-print(thought.stemma)  # STEMMA(fehm-tr: 0.73, cortex: 0.27)
+print(thought.stemma)        # STEMMA(fehm-tr: 0.18, ...)
+print(thought.gamma)         # NEW in v0.2 — KLM γ when backend ships it
+print(thought.audit_id)      # NEW in v0.2
+```
 
-# Every response knows its source
-for varve, weight in thought.stemma.top(3):
-    print(f"  {varve}: {weight:.2%}")
+## Models
+
+```python
+for m in client.models_list():
+    print(f"{m.id:15s}  ctx={m.context_window}  tier_min={m.tier_min}")
+# fehm-8b          ctx=32768  tier_min=surface
+# cortex-14b       ctx=32768  tier_min=vein
+# bilge-14b        ctx=32768  tier_min=vein
 ```
 
 ## API
